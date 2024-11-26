@@ -1,0 +1,18 @@
+version: "3.5"
+
+services:
+  go-course-web:
+    platform: linux/amd64
+    container_name: mortgage_web
+    build:
+      context: ./.dockers/postgres
+      dockerfile: Dockerfile
+
+    environment:
+      POSTGRES_DB: mortgage_db
+      POSTGRES_USER: mortgage_user
+      POSTGRES_PASSWORD: mortgage_pass
+    ports:
+      - "5439:5432"
+    volumes:
+      - ./.dockers/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
