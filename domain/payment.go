@@ -11,7 +11,7 @@ type Payment struct {
 	ID              string         `json:"id" gorm:"type:char(36);not null;primaryKey;unique_index"`
 	PaymentNumber   int32          `json:"payment_number" gorm:"type:int;not null"`
 	DatePayment     time.Time      `json:"date_payment"`
-	Rate            int32          `json:"rate" gorm:"type:int;not null"`
+	Rate            float32        `json:"rate" gorm:"type:decimal(10,2);not null"`
 	MonthlyPayment  float64        `json:"monthly_payment" gorm:"type:decimal(10,2);not null"`
 	DamageInsurance float64        `json:"damage_insurance" gorm:"type:decimal(10,2);not null"`
 	LifeInsurance   float64        `json:"life_insurance" gorm:"type:decimal(10,2);not null"`

@@ -1,22 +1,41 @@
 package main
 
 import (
-	"fmt"
 	"log"
 
+	"github.com/MarcKVR/mortgage/db"
+	"github.com/MarcKVR/mortgage/handler"
+	"github.com/MarcKVR/mortgage/repository"
+	"github.com/MarcKVR/mortgage/service"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/joho/godotenv"
 )
 
 func main() {
-	app := fiber.New(fiber.Config{
-		AppName: "Mortgage control",
-	})
+	app := fiber.New()
+
+	_ = godotenv.Load()
+	logger := db.InitLogger()
+
+	database, err := db.GetConnection()
+	if err != nil {
+		logger.Fatal(err)
+	}
+
+	defer db.Close(database)
 
 	// Ruta raíz de la aplicación
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Welcome to te mortgage app!")
+		return c.SendString("¡CONGRATULATIONS! Welcome to te mortgage app!")
+	})
+
+	paymentRepo := repository.NewRepository(database, logger)
+	paymentService := service.NewService(logger, paymentRepo)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+
+	app.Route("/admin", func(adminApi fiber.Router) {
+		adminApi.Post("/payments", paymentHandler.Create)
+
 	})
 
 	// // Agrupador de rutas
@@ -42,14 +61,14 @@ func main() {
 	// 	return c.Status(404).SendString("Sorry can't find that!")
 	// })
 
-	dsn := "host=localhost user=mortgage_user password=mortgage_pass dbname=mortgage_db port=5439 sslmode=disable TimeZone=America/Mexico_City"
-	_, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// dsn := "host=localhost user=mortgage_user password=mortgage_pass dbname=mortgage_db port=5439 sslmode=disable TimeZone=America/Mexico_City"
+	// _, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
-	if err != nil {
-		fmt.Println(err)
-	} else {
-		fmt.Println("Connection to the database was successful!")
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// } else {
+	// 	fmt.Println("Connection to the database was successful!")
+	// }
 
 	log.Fatal(app.Listen(":3000"))
 }
