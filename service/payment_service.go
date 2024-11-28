@@ -14,6 +14,7 @@ type (
 			rate float32,
 			paymentNumber int32,
 			datePayment string) (*domain.Payment, error)
+		Get(id string) (*domain.Payment, error)
 	}
 
 	service struct {
@@ -53,6 +54,15 @@ func (s *service) Create(monthlyPayment, damageInsurance, lifeInsurance, interes
 
 	if err := s.repo.Create(payment); err != nil {
 		s.log.Println(err)
+		return nil, err
+	}
+
+	return payment, nil
+}
+
+func (s *service) Get(id string) (*domain.Payment, error) {
+	payment, err := s.repo.Get(id)
+	if err != nil {
 		return nil, err
 	}
 

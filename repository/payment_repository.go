@@ -10,6 +10,7 @@ import (
 type (
 	PaymentRepository interface {
 		Create(payment *domain.Payment) error
+		Get(id string) (*domain.Payment, error)
 	}
 
 	repository struct {
@@ -32,4 +33,14 @@ func (repo *repository) Create(payment *domain.Payment) error {
 	repo.log.Println("Payment was with id: received successfully", payment.ID)
 
 	return nil
+}
+
+func (repo *repository) Get(id string) (*domain.Payment, error) {
+	payment := domain.Payment{ID: id}
+
+	if err := repo.db.First(&payment).Error; err != nil {
+		return nil, err
+	}
+
+	return &payment, nil
 }

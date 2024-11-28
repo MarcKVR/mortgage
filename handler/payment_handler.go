@@ -60,3 +60,13 @@ func (h *PaymentHandler) Create(c *fiber.Ctx) error {
 
 	return c.JSON(Response{Status: 200, Data: paymentCreated})
 }
+
+func (h *PaymentHandler) Get(c *fiber.Ctx) error {
+	id := c.Params("id")
+	payment, err := h.service.Get(id)
+	if err != nil {
+		c.Status(404)
+		return c.JSON(Response{Status: 404, Err: err.Error()})
+	}
+	return c.JSON(Response{Status: 200, Data: payment})
+}

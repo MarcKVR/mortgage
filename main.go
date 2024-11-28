@@ -35,6 +35,7 @@ func main() {
 
 	app.Route("/admin", func(adminApi fiber.Router) {
 		adminApi.Post("/payments", paymentHandler.Create)
+		adminApi.Get("/payments/:id", paymentHandler.Get)
 
 	})
 
