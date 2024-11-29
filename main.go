@@ -7,6 +7,7 @@ import (
 	"github.com/MarcKVR/mortgage/handler"
 	"github.com/MarcKVR/mortgage/repository"
 	"github.com/MarcKVR/mortgage/service"
+	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/joho/godotenv"
 )
@@ -29,15 +30,32 @@ func main() {
 		return c.SendString("¡CONGRATULATIONS! Welcome to te mortgage app!")
 	})
 
+	userRepo := repository.NewUserRepository(database, logger)
+	userService := service.NewUserService(userRepo, logger)
+	userHandler := handler.NewUserHandler(userService)
+	app.Post("/users", userHandler.Create)
+	app.Get("/users/:id", userHandler.Get)
+
 	paymentRepo := repository.NewRepository(database, logger)
 	paymentService := service.NewService(logger, paymentRepo)
 	paymentHandler := handler.NewPaymentHandler(paymentService)
 
-	app.Route("/admin", func(adminApi fiber.Router) {
-		adminApi.Post("/payments", paymentHandler.Create)
-		adminApi.Get("/payments/:id", paymentHandler.Get)
+	app.Use("/payments", jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			c.Status(fiber.StatusUnauthorized)
+			return c.JSON(fiber.Map{"error": "Unauthorized for resource"})
+		},
+	}))
 
-	})
+	// app.Route("/admin", func(adminApi fiber.Router) {
+	// 	adminApi.Post("/payments", paymentHandler.Create)
+	// 	adminApi.Get("/payments/:id", paymentHandler.Get)
+
+	// })
+
+	app.Post("/payments", paymentHandler.Create)
+	app.Get("/payments/:id", paymentHandler.Get)
 
 	// // Agrupador de rutas
 	// api := app.Group("/api")

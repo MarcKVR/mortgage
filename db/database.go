@@ -39,6 +39,10 @@ func GetConnection() (*gorm.DB, error) {
 		if err := db_connection.AutoMigrate(&domain.Payment{}); err != nil {
 			return nil, err
 		}
+
+		if err := db_connection.AutoMigrate(&domain.User{}); err != nil {
+			return nil, err
+		}
 	}
 
 	return db_connection, nil

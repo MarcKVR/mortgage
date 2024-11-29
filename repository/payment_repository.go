@@ -13,20 +13,20 @@ type (
 		Get(id string) (*domain.Payment, error)
 	}
 
-	repository struct {
+	paymentRepository struct {
 		db  *gorm.DB
 		log *log.Logger
 	}
 )
 
 func NewRepository(db *gorm.DB, log *log.Logger) PaymentRepository {
-	return &repository{
+	return &paymentRepository{
 		db:  db,
 		log: log,
 	}
 }
 
-func (repo *repository) Create(payment *domain.Payment) error {
+func (repo *paymentRepository) Create(payment *domain.Payment) error {
 	if err := repo.db.Create(payment).Error; err != nil {
 		repo.log.Printf("Error: %v", err)
 	}
@@ -35,7 +35,7 @@ func (repo *repository) Create(payment *domain.Payment) error {
 	return nil
 }
 
-func (repo *repository) Get(id string) (*domain.Payment, error) {
+func (repo *paymentRepository) Get(id string) (*domain.Payment, error) {
 	payment := domain.Payment{ID: id}
 
 	if err := repo.db.First(&payment).Error; err != nil {
