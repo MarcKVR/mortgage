@@ -30,11 +30,21 @@ func main() {
 		return c.SendString("¡CONGRATULATIONS! Welcome to te mortgage app!")
 	})
 
+	authRepo := repository.NewAuthRepository(database, logger)
+	authService := service.NewAuthService(authRepo, logger)
+	authHandler := handler.NewAuthHandler(authService)
+	app.Post("/login", authHandler.Login)
+
 	userRepo := repository.NewUserRepository(database, logger)
 	userService := service.NewUserService(userRepo, logger)
 	userHandler := handler.NewUserHandler(userService)
 	app.Post("/users", userHandler.Create)
 	app.Get("/users/:id", userHandler.Get)
+
+	// app.Route("/admin", func(adminApi fiber.Router) {
+	// 	adminApi.Post("/payments", paymentHandler.Create)
+	// 	adminApi.Get("/payments/:id", paymentHandler.Get)
+	// })
 
 	paymentRepo := repository.NewRepository(database, logger)
 	paymentService := service.NewService(logger, paymentRepo)
@@ -47,12 +57,6 @@ func main() {
 			return c.JSON(fiber.Map{"error": "Unauthorized for resource"})
 		},
 	}))
-
-	// app.Route("/admin", func(adminApi fiber.Router) {
-	// 	adminApi.Post("/payments", paymentHandler.Create)
-	// 	adminApi.Get("/payments/:id", paymentHandler.Get)
-
-	// })
 
 	app.Post("/payments", paymentHandler.Create)
 	app.Get("/payments/:id", paymentHandler.Get)
@@ -75,19 +79,10 @@ func main() {
 	// 	})
 	// })
 
-	// // Ruta por defecto de No encontrado
-	// app.Use(func(c *fiber.Ctx) error {
-	// 	return c.Status(404).SendString("Sorry can't find that!")
-	// })
-
-	// dsn := "host=localhost user=mortgage_user password=mortgage_pass dbname=mortgage_db port=5439 sslmode=disable TimeZone=America/Mexico_City"
-	// _, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	// if err != nil {
-	// 	fmt.Println(err)
-	// } else {
-	// 	fmt.Println("Connection to the database was successful!")
-	// }
+	// Ruta por defecto de No encontrado
+	app.Use(func(c *fiber.Ctx) error {
+		return c.Status(404).SendString("Sorry can't find that page!")
+	})
 
 	log.Fatal(app.Listen(":3000"))
 }
