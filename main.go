@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"github.com/MarcKVR/mortgage/db"
 	"github.com/MarcKVR/mortgage/handler"
@@ -25,41 +26,41 @@ func main() {
 
 	defer db.Close(database)
 
+	jwtSecret := os.Getenv("JWT_SECRET")
+
 	// Ruta raíz de la aplicación
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("¡CONGRATULATIONS! Welcome to te mortgage app!")
 	})
 
+	jwtMiddleware := jwtware.New(jwtware.Config{
+		SigningKey: jwtware.SigningKey{Key: []byte(jwtSecret)},
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Token inválido o no proporcionado"})
+		},
+	})
+
+	// Grupo de rutas protegidas bajo /admin
+	paymentRepo := repository.NewRepository(database, logger)
+	paymentService := service.NewService(logger, paymentRepo)
+	paymentHandler := handler.NewPaymentHandler(paymentService)
+	adminGroup := app.Group("/admin", jwtMiddleware)
+	adminGroup.Post("/payments", paymentHandler.Create)
+	adminGroup.Get("/payments/:id", paymentHandler.Get)
+
+	// Otro grupo de rutas protegidas bajo /api
+	userRepo := repository.NewUserRepository(database, logger)
+	userService := service.NewUserService(userRepo, logger)
+	userHandler := handler.NewUserHandler(userService)
+	apiGroup := app.Group("/api", jwtMiddleware)
+	apiGroup.Post("/users", userHandler.Create)
+	apiGroup.Get("/users/:id", userHandler.Get)
+
+	// Rutas sin protección
 	authRepo := repository.NewAuthRepository(database, logger)
 	authService := service.NewAuthService(authRepo, logger)
 	authHandler := handler.NewAuthHandler(authService)
 	app.Post("/login", authHandler.Login)
-
-	userRepo := repository.NewUserRepository(database, logger)
-	userService := service.NewUserService(userRepo, logger)
-	userHandler := handler.NewUserHandler(userService)
-	app.Post("/users", userHandler.Create)
-	app.Get("/users/:id", userHandler.Get)
-
-	// app.Route("/admin", func(adminApi fiber.Router) {
-	// 	adminApi.Post("/payments", paymentHandler.Create)
-	// 	adminApi.Get("/payments/:id", paymentHandler.Get)
-	// })
-
-	paymentRepo := repository.NewRepository(database, logger)
-	paymentService := service.NewService(logger, paymentRepo)
-	paymentHandler := handler.NewPaymentHandler(paymentService)
-
-	app.Use("/payments", jwtware.New(jwtware.Config{
-		SigningKey: jwtware.SigningKey{Key: []byte("secret")},
-		ErrorHandler: func(c *fiber.Ctx, err error) error {
-			c.Status(fiber.StatusUnauthorized)
-			return c.JSON(fiber.Map{"error": "Unauthorized for resource"})
-		},
-	}))
-
-	app.Post("/payments", paymentHandler.Create)
-	app.Get("/payments/:id", paymentHandler.Get)
 
 	// // Agrupador de rutas
 	// api := app.Group("/api")

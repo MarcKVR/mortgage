@@ -1,19 +1,21 @@
 package auth
 
 import (
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte("secret")
-
 func GenerateToken(email string) (string, error) {
+	secret := os.Getenv("JWT_SECRET")
+	var secretKey = []byte(secret)
+
 	claims := jwt.MapClaims{
 		"email": email,
-		"exp":   time.Now().Add(time.Hour * 72).Unix(), // Token válido por 72 horas
+		"exp":   time.Now().Add(time.Hour * 72).Unix(),
 	}
 
 	token := jwt.NewWithClaims((jwt.SigningMethodHS256), claims)
-	return token.SignedString(jwtSecret)
+	return token.SignedString(secretKey)
 }
