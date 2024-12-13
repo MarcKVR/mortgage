@@ -55,6 +55,7 @@ func main() {
 	apiGroup := app.Group("/api", jwtMiddleware)
 	apiGroup.Post("/users", userHandler.Create)
 	apiGroup.Get("/users/:id", userHandler.Get)
+	apiGroup.Get("/users", userHandler.GetUsers)
 
 	// Rutas sin protección
 	authRepo := repository.NewAuthRepository(database, logger)
