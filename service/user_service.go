@@ -1,6 +1,7 @@
 package service
 
 import (
+	"errors"
 	"log"
 
 	"github.com/MarcKVR/mortgage/domain"
@@ -18,6 +19,7 @@ type (
 		Get(id string) (*domain.User, error)
 		GetUsers(filters Filters, limit, offset int) ([]domain.User, error)
 		Count(filters Filters) (int, error)
+		Update(id string, user *domain.User) error
 	}
 
 	userService struct {
@@ -67,4 +69,24 @@ func (s *userService) Count(filters Filters) (int, error) {
 		Email: filters.Email,
 	}
 	return s.repo.Count(repoFilters)
+}
+
+func (s *userService) Update(id string, user *domain.User) error {
+
+	existentUser, err := s.repo.Get(id)
+	if err != nil {
+		return err
+	}
+
+	if existentUser == nil {
+		return errors.New("user not found")
+	}
+
+	existentUser.Name = user.Name
+	existentUser.Email = user.Email
+	if user.Password != "" {
+		existentUser.Password = user.Password
+	}
+
+	return s.repo.Update(existentUser)
 }

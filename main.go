@@ -7,6 +7,7 @@ import (
 	"github.com/MarcKVR/mortgage/db"
 	"github.com/MarcKVR/mortgage/handler"
 	"github.com/MarcKVR/mortgage/repository"
+	"github.com/MarcKVR/mortgage/router"
 	"github.com/MarcKVR/mortgage/service"
 	jwtware "github.com/gofiber/contrib/jwt"
 	"github.com/gofiber/fiber/v2"
@@ -52,10 +53,13 @@ func main() {
 	userRepo := repository.NewUserRepository(database, logger)
 	userService := service.NewUserService(userRepo, logger)
 	userHandler := handler.NewUserHandler(userService)
-	apiGroup := app.Group("/api", jwtMiddleware)
-	apiGroup.Post("/users", userHandler.Create)
-	apiGroup.Get("/users/:id", userHandler.Get)
-	apiGroup.Get("/users", userHandler.GetUsers)
+	router.SetupRoutes(app, userHandler)
+
+	// apiGroup := app.Group("/api", jwtMiddleware)
+	// apiGroup.Post("/users", userHandler.Create)
+	// apiGroup.Get("/users/:id", userHandler.Get)
+	// apiGroup.Get("/users", userHandler.GetUsers)
+	// apiGroup.Put("/users/:id", userHandler.Update)
 
 	// Rutas sin protección
 	authRepo := repository.NewAuthRepository(database, logger)

@@ -20,6 +20,7 @@ type (
 		Get(id string) (*domain.User, error)
 		GetUsers(filters Filters, limit, offset int) ([]domain.User, error)
 		Count(filters Filters) (int, error)
+		Update(user *domain.User) error
 	}
 
 	userRepository struct {
@@ -92,4 +93,12 @@ func applyFilters(user *gorm.DB, filters Filters) *gorm.DB {
 	}
 
 	return user
+}
+
+func (repo *userRepository) Update(user *domain.User) error {
+	if err := repo.db.Save(user).Error; err != nil {
+		repo.log.Printf("Error: %v", err)
+	}
+
+	return nil
 }

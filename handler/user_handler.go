@@ -99,3 +99,39 @@ func (h *UserHandler) GetUsers(c *fiber.Ctx) error {
 		Meta:   meta,
 	})
 }
+
+func (h *UserHandler) Update(c *fiber.Ctx) error {
+	id := c.Params("id")
+
+	if id == "" {
+		c.Status(400)
+		return c.JSON(Response{Status: fiber.StatusBadRequest, Err: "id is required"})
+	}
+
+	var userInput struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+
+	if err := c.BodyParser(&userInput); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	user := domain.User{
+		Name:  userInput.Name,
+		Email: userInput.Email,
+		ID:    id,
+	}
+
+	if err := h.service.Update(id, &user); err != nil {
+		c.Status(422)
+		return c.JSON(Response{Status: fiber.StatusUnprocessableEntity, Err: err.Error()})
+	}
+
+	return c.JSON(Response{
+		Status: 200,
+		Data:   map[string]string{"id": user.ID, "name": user.Name, "email": user.Email},
+	})
+}
