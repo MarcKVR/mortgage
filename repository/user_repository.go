@@ -21,6 +21,7 @@ type (
 		GetUsers(filters Filters, limit, offset int) ([]domain.User, error)
 		Count(filters Filters) (int, error)
 		Update(user *domain.User) error
+		FindByEmail(email string) (*domain.User, error)
 	}
 
 	userRepository struct {
@@ -101,4 +102,18 @@ func (repo *userRepository) Update(user *domain.User) error {
 	}
 
 	return nil
+}
+
+func (repo *userRepository) FindByEmail(email string) (*domain.User, error) {
+	var user domain.User
+	err := repo.db.Where("email = ?", email).First(&user).Error
+
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			return nil, nil
+		}
+		return nil, err
+	}
+
+	return &user, nil
 }

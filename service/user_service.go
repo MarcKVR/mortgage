@@ -6,6 +6,7 @@ import (
 
 	"github.com/MarcKVR/mortgage/domain"
 	"github.com/MarcKVR/mortgage/repository"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type (
@@ -28,6 +29,14 @@ type (
 	}
 )
 
+func hashPassword(password string) (string, error) {
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
+}
+
 func NewUserService(repo repository.UserRepository, log *log.Logger) UserService {
 	return &userService{
 		repo: repo,
@@ -36,18 +45,23 @@ func NewUserService(repo repository.UserRepository, log *log.Logger) UserService
 }
 
 func (s *userService) Create(user *domain.User) (*domain.User, error) {
-	newUser := &domain.User{
-		Name:     user.Name,
-		Email:    user.Email,
-		Password: user.Password,
+	existingUser, _ := s.repo.FindByEmail(user.Email)
+	if existingUser != nil {
+		return nil, errors.New("user already exists")
 	}
 
-	if err := s.repo.Create(newUser); err != nil {
+	hashedPassword, err := hashPassword(user.Password)
+	if err != nil {
+		return nil, err
+	}
+
+	user.Password = hashedPassword
+	if err := s.repo.Create(user); err != nil {
 		s.log.Println(err)
 		return nil, err
 	}
 
-	return newUser, nil
+	return user, nil
 }
 
 func (s *userService) Get(id string) (*domain.User, error) {
